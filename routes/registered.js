@@ -2,6 +2,9 @@ var express = require('express');
 var router = express.Router();
 var Registered = require('../models/registered');
 var mongoose = require('mongoose');
+var bcrypt = require('bcryptjs');
+
+
 
 
 
@@ -30,19 +33,27 @@ router.route('/:id')
 
  });
 router.route('/login').post(function(req,res){
-	Registered.findOne({'email': req.body.email, 'password':req.body.password}, function(err, user){
-		if(err){
-			res.status(400);
-			res.json({err: String(err)});
-		}else if(user === null){
-			res.status(403);
-			res.send("No such user");
-		} else{
-			res.status(202);
-			res.send({status: 'ACCEPTED'});
-		}
-	});
+          
+          	Registered.findOne({'email': req.body.email}, function(err, user){
+          		if(err){
+          			res.status(400);
+          			res.json({err: String(err)});
+          		}else if(user === null){
+          			res.status(403);
+          			res.send("No such user");
+          		} else{
+
+                bcrypt.compare(req.body.password, user.password, function(err, resp) {
+                  if(err) resp.json({err: String(err)});
+                  if(resp){
+          			     res.status(202);
+          			     res.send({status: 'ACCEPTED'});
+                  }
+          		  });
+              }
+          	});
 });
+
   router.route('/').post(function(req, res) {
   
 
@@ -55,21 +66,29 @@ router.route('/login').post(function(req,res){
         res.json({err: String(err)}); 
       	} else if(user === null) {	
 
+            bcrypt.genSalt(10, function(err, salt) {
+                  bcrypt.hash(req.body.password, salt, function(err, hash) {
+                  // Store hash in your password DB. 
 
-      		 	var newUser = (new Registered({
-          	  	firstName: req.body.firstName,
-          	 	lastName:  req.body.lastName,
-          	 	email:     req.body.email,
-          	 	password:  req.body.password
-        	  }));
-      		newUser.save(function(err){
-      			if(err){
-      				throw err;
-      			}else{
-      				res.status(201);
-      				res.send({ status: 'SUCCESS'});
-      			}
-      		});
+                          if(err) res.json({err: String(err)});
+
+                           var newUser = (new Registered({
+                              firstName: req.body.firstName,
+                              lastName:  req.body.lastName,
+                              email:     req.body.email,
+                              password:  hash
+                          }));
+                          newUser.save(function(err){
+                            if(err){
+                             throw err;
+                            }else{
+                              res.status(201);
+                              res.send({ status: 'SUCCESS'});
+                            }
+                          });
+
+                  });
+            });  
 
       	} else{
       		 res.status(409);
