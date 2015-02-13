@@ -57,9 +57,6 @@ router.route('/login').post(function(req,res){
   router.route('/').post(function(req, res) {
   
 
-
-
-
 	 Registered.findOne({ 'email': req.body.email}, function(err, user){
 	 	if(err) {
 	 	res.status(400);
@@ -68,7 +65,6 @@ router.route('/login').post(function(req,res){
 
             bcrypt.genSalt(10, function(err, salt) {
                   bcrypt.hash(req.body.password, salt, function(err, hash) {
-                  // Store hash in your password DB. 
 
                           if(err) res.json({err: String(err)});
 
